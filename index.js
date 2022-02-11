@@ -1,9 +1,12 @@
-import {ApolloServer} from 'apollo-server';
-import {resolvers, typeDefs} from './schema.js';
+import {ApolloServer, gql} from 'apollo-server';
+import {buildSubgraphSchema} from '@apollo/subgraph';
+import {readFileSync} from 'fs';
+import {resolvers} from './resolvers.js';
+
+const typeDefs = gql(readFileSync('./schema.graphql', 'utf-8'));
 
 const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+  schema: buildSubgraphSchema({typeDefs, resolvers}),
   introspection: true,
   playground: true
 });

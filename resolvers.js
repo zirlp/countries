@@ -1,74 +1,6 @@
 import countriesList from 'countries-list';
 import provinces from 'provinces';
 import sift from 'sift';
-import {gql} from 'apollo-server';
-
-export const typeDefs = gql`
-  type Continent {
-    code: ID!
-    name: String!
-    countries: [Country!]!
-  }
-
-  type Country {
-    code: ID!
-    name: String!
-    native: String!
-    phone: String!
-    continent: Continent!
-    capital: String
-    currency: String
-    languages: [Language!]!
-    emoji: String!
-    emojiU: String!
-    states: [State!]!
-  }
-
-  type State {
-    code: String
-    name: String!
-    country: Country!
-  }
-
-  type Language {
-    code: ID!
-    name: String
-    native: String
-    rtl: Boolean!
-  }
-
-  input StringQueryOperatorInput {
-    eq: String
-    ne: String
-    in: [String]
-    nin: [String]
-    regex: String
-    glob: String
-  }
-
-  input CountryFilterInput {
-    code: StringQueryOperatorInput
-    currency: StringQueryOperatorInput
-    continent: StringQueryOperatorInput
-  }
-
-  input ContinentFilterInput {
-    code: StringQueryOperatorInput
-  }
-
-  input LanguageFilterInput {
-    code: StringQueryOperatorInput
-  }
-
-  type Query {
-    continents(filter: ContinentFilterInput): [Continent!]!
-    continent(code: ID!): Continent
-    countries(filter: CountryFilterInput): [Country!]!
-    country(code: ID!): Country
-    languages(filter: LanguageFilterInput): [Language!]!
-    language(code: ID!): Language
-  }
-`;
 
 function filterToSift(filter = {}) {
   return sift(
@@ -111,7 +43,8 @@ export const resolvers = {
         };
       }),
     states: country =>
-      provinces.filter(province => province.country === country.code)
+      provinces.filter(province => province.country === country.code),
+    __resolveReference: country => countries[country.code]
   },
   State: {
     code: state => state.short,
@@ -124,10 +57,12 @@ export const resolvers = {
         .map(([code, country]) => ({
           ...country,
           code
-        }))
+        })),
+    __resolveReference: continent => continents[continent.code]
   },
   Language: {
-    rtl: language => Boolean(language.rtl)
+    rtl: language => Boolean(language.rtl),
+    __resolveReference: language => languages[language.code]
   },
   Query: {
     continent(parent, {code}) {
