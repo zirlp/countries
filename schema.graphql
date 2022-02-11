@@ -1,9 +1,3 @@
-type Continent @key(fields: "code") {
-  code: ID!
-  name: String!
-  countries: [Country!]!
-}
-
 type Country @key(fields: "code") {
   code: ID!
   name: String!
@@ -18,10 +12,10 @@ type Country @key(fields: "code") {
   states: [State!]!
 }
 
-type State {
-  code: String
+type Continent @key(fields: "code") {
+  code: ID!
   name: String!
-  country: Country!
+  countries: [Country!]!
 }
 
 type Language @key(fields: "code") {
@@ -29,6 +23,12 @@ type Language @key(fields: "code") {
   name: String
   native: String
   rtl: Boolean!
+}
+
+type State {
+  code: String
+  name: String!
+  country: Country!
 }
 
 input StringQueryOperatorInput {
@@ -55,10 +55,10 @@ input LanguageFilterInput {
 }
 
 type Query {
-  continents(filter: ContinentFilterInput): [Continent!]!
-  continent(code: ID!): Continent
   countries(filter: CountryFilterInput): [Country!]!
   country(code: ID!): Country
+  continents(filter: ContinentFilterInput): [Continent!]!
+  continent(code: ID!): Continent
   languages(filter: LanguageFilterInput): [Language!]!
   language(code: ID!): Language
 }
