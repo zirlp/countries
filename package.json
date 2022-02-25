@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@apollo/subgraph": "^0.3.1",
-    "apollo-server": "^3.6.3",
+    "apollo-server-lambda": "^3.6.3",
     "countries-list": "^2.5.4",
     "graphql": "^15.8.0",
     "provinces": "^1.11.0",
