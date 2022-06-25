@@ -22,6 +22,8 @@ export const typeDefs = gql`
     emoji: String!
     emojiU: String!
     states: [State!]!
+    url: String
+    comment: String
   }
 
   type State {
@@ -68,6 +70,15 @@ export const typeDefs = gql`
     languages(filter: LanguageFilterInput): [Language!]!
     language(code: ID!): Language
   }
+
+type Mutation {
+  editCountryProperties(
+    country: String!
+    comment: String
+    url: String
+  ): Country
+}
+
 `;
 
 function filterToSift(filter = {}) {
@@ -178,5 +189,31 @@ export const resolvers = {
           code
         }))
         .filter(filterToSift(filter))
+  }, 
+  Mutation: {
+  
+    editCountryProperties: (root, args) => {
+     
+      const code = args.country
+
+      if (!Object.hasOwnProperty.call(countriesList.countries, code)) return null;
+        
+      const country = countriesList.countries[code]
+
+      const updatedCountry = {...country, comment: args.comment, url: args.url}
+      
+      countriesList.countries[code] = updatedCountry
+
+      return updatedCountry;
+    }
+    // editCountryProperties($cc: CountryCode!, $props: Props!) {
+    //   editProperties(CountryCode: $cc, Props: $props) {
+    //     url
+    //     comment
+    //   }
+    // } 
+    
   }
 };
+
+// console.log({...countriesList.countries[si], "comment": "hola"})
