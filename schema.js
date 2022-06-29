@@ -2,6 +2,9 @@ import countriesList from 'countries-list';
 import provinces from 'provinces';
 import sift from 'sift';
 import {gql} from 'apollo-server';
+import { v1 as uuid } from 'uuid';
+
+var contacts = [];
 
 export const typeDefs = gql`
   type Continent {
@@ -24,6 +27,7 @@ export const typeDefs = gql`
     states: [State!]!
     url: String
     comment: String
+    contacts: [Contact]
   }
 
   type State {
@@ -37,6 +41,14 @@ export const typeDefs = gql`
     name: String
     native: String
     rtl: Boolean!
+  }
+
+  type Contact {
+    name: String!
+    country: Country!
+    mail: String!
+    comment: String
+    code: ID!
   }
 
   input StringQueryOperatorInput {
@@ -69,6 +81,7 @@ export const typeDefs = gql`
     country(code: ID!): Country
     languages(filter: LanguageFilterInput): [Language!]!
     language(code: ID!): Language
+    contacts: [Contact!]
   }
 
 type Mutation {
@@ -76,7 +89,28 @@ type Mutation {
     country: String!
     comment: String
     url: String
-  ): Country
+  ): Country!
+
+  createContact(
+    name: String!
+    country: String!
+    mail: String!
+    comment: String
+  ): Contact!
+
+  editContact(
+    code: ID!
+    country: String!
+    name: String!
+    mail: String!
+    comment: String
+  ): Contact!
+
+  deleteContact(
+    code: ID!
+    country: String!
+  ): [Contact!]
+
 }
 
 `;
@@ -188,7 +222,10 @@ export const resolvers = {
           ...language,
           code
         }))
-        .filter(filterToSift(filter))
+        .filter(filterToSift(filter)),
+  
+    contacts: () => contacts    
+
   }, 
   Mutation: {
   
@@ -205,13 +242,52 @@ export const resolvers = {
       countriesList.countries[code] = updatedCountry
 
       return updatedCountry;
+    },
+    createContact: (root, args) => {
+      const contact = {...args, code: uuid()};
+
+      //the country must be the code to do this
+      const country = countriesList.countries[contact.country]
+      
+      if(!country.contacts){
+        countriesList.countries[contact.country] = {...country, contacts: [contact]}
+      } else { countriesList.countries[contact.country].contacts.push(contact)  }
+      
+      contact.country = country
+
+      //There can not be more than one contact with same name
+      if(contacts.find(c => c.name === contact.name)) return null
+      else contacts.push(contact)
+      return contact
+    },
+
+    deleteContact: (root, args) => {
+      const contact = {...args}
+
+      const updatedList = contacts.filter(c=> c.code !== contact.code)
+      contacts = updatedList; //this is to update the mainList of contacts for future uses i guess(?)
+      
+      const contactList = countriesList.countries[contact.country].contacts;
+      const updatedContacts = contactList.filter(c=>c.code !==contact.code) 
+      countriesList.countries[contact.country].contacts = updatedContacts; //update contacts from X country
+
+      return contacts;
+    },
+
+    editContact: (root, args) => {
+      const contact = {...args} //because i can edit every prop
+
+      const index = contacts.findIndex(c=> c.code === contact.code);
+      if(index===-1) return null;
+      contacts[index] = contact; 
+
+      const contactList = countriesList.countries[contact.country].contacts;
+      const listIndex = contactList.findIndex(c=> c.code === contact.code)
+      countriesList.countries[contact.country].contacts[listIndex] = contact
+
+      return contact;
     }
-    // editCountryProperties($cc: CountryCode!, $props: Props!) {
-    //   editProperties(CountryCode: $cc, Props: $props) {
-    //     url
-    //     comment
-    //   }
-    // } 
+
     
   }
 };
